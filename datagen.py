@@ -3,6 +3,13 @@ import random
 import argparse
 from datetime import datetime, timedelta
 
+TXN_ID_COUNTER = 0
+
+def next_txn_id():
+    global TXN_ID_COUNTER
+    TXN_ID_COUNTER += 1
+    return f"tx{TXN_ID_COUNTER:03d}"
+
 def generate_normal_transactions(base_time, payer_id=None):
     """Generate normal background transactions."""
     transactions = []
@@ -12,6 +19,7 @@ def generate_normal_transactions(base_time, payer_id=None):
     # 5 normal users doing normal things over an hour
     for _ in range(50):
         t = {
+            "transaction_id": next_txn_id(),
             "payer_id": payer_id if payer_id else f"USER_{random.randint(100, 105)}",
             "payee_id": random.choice(merchants),
             "amount": random.randint(100, 2000),
@@ -31,6 +39,7 @@ def inject_fraud_type_1(base_time):
     for i in range(12):
         amt = 15000 if i == 11 else random.randint(10, 50)  # The 12th tx is the massive one
         t = {
+            "transaction_id": next_txn_id(),
             "payer_id": "HACKED_USER_999",
             "payee_id": "SHADY_MERCHANT_XYZ",
             "amount": amt,
@@ -48,6 +57,7 @@ def inject_fraud_type_2(base_time):
     transactions = []
     # Normal transaction first to establish baseline state
     transactions.append({
+        "transaction_id": next_txn_id(),
         "payer_id": "USER_777",
         "payee_id": "ZOMATO",
         "amount": 300,
@@ -57,6 +67,7 @@ def inject_fraud_type_2(base_time):
     })
     # The attack: 20 minutes later, new device, huge amount, unknown merchant
     transactions.append({
+        "transaction_id": next_txn_id(),
         "payer_id": "USER_777",
         "payee_id": "UNKNOWN_CRYPTO_EXCHANGE",
         "amount": 45000,
@@ -71,6 +82,7 @@ def inject_fraud_type_3(base_time):
     Rule Trigger: Unusual hour.
     """
     return [{
+        "transaction_id": next_txn_id(),
         "payer_id": "USER_444",
         "payee_id": "GAMING_SITE",
         "amount": 8000,
@@ -80,6 +92,9 @@ def inject_fraud_type_3(base_time):
     }]
 
 def generate_dataset(fraud_types=None, payer_id=None):
+    global TXN_ID_COUNTER
+    TXN_ID_COUNTER = 0
+    
     transactions = []
     base_time = datetime(2026, 2, 10, 12, 0, 0)
     
